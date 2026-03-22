@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security & Bug Hunting — Sahyadri Code Works</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:#FFFAF6;color:#1C1008;-webkit-font-smoothing:antialiased;}
+:root{
+  --o:#EA580C;--odk:#C2410C;--olt:#FFF3E0;--amb:#FB923C;
+  --bg:#FFFAF6;--bg2:#FFF4EC;--nv:#1C1008;--br:#57341C;
+  --pale:#C4A882;--bdr:#F0D9C8;
+  --grad:linear-gradient(135deg,#C2410C 0%,#FB923C 100%);
+  --sec:#0E1F3D;--sec2:#1B3A6B;
+}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:99;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(255,250,246,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--bdr);}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-mark{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-text{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:#0C3B5E;letter-spacing:1px;text-transform:uppercase;line-height:1.1;display:flex;flex-direction:column;}
+.logo-text span{color:#0D9488;font-size:10px;font-weight:700;letter-spacing:2px;}
+.back-btn{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--br);text-decoration:none;transition:color .15s;}
+.back-btn:hover{color:var(--nv);}
+.back-btn svg{transition:transform .15s;}
+.back-btn:hover svg{transform:translateX(-3px);}
+
+/* HERO */
+.hero-banner{background:var(--sec);padding:90px 48px;position:relative;overflow:hidden;text-align:center;}
+.hero-banner::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(234,88,12,.07) 1px,transparent 1px);background-size:28px 28px;}
+.hero-blob1{position:absolute;width:500px;height:500px;border-radius:50%;filter:blur(110px);background:radial-gradient(circle,rgba(194,65,12,.25) 0%,transparent 70%);top:-180px;right:-80px;pointer-events:none;}
+.hero-blob2{position:absolute;width:350px;height:350px;border-radius:50%;filter:blur(90px);background:radial-gradient(circle,rgba(27,58,107,.6) 0%,transparent 70%);bottom:-80px;left:-60px;pointer-events:none;}
+.hero-inner{position:relative;z-index:2;max-width:720px;margin:0 auto;}
+.hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,243,224,.12);color:var(--amb);font-size:12px;font-weight:600;padding:6px 16px;border-radius:100px;border:1px solid rgba(251,146,60,.3);margin-bottom:24px;}
+.chip-dot{width:6px;height:6px;border-radius:50%;background:var(--amb);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.hero-h{font-family:'Playfair Display',serif;font-size:clamp(36px,6vw,62px);font-weight:800;color:white;line-height:1.1;letter-spacing:-1px;margin-bottom:18px;}
+.hero-h .hi{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:17px;color:rgba(255,255,255,.6);line-height:1.75;max-width:560px;margin:0 auto 32px;}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn-main{display:inline-flex;align-items:center;gap:8px;background:var(--grad);color:white;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;padding:13px 26px;border-radius:10px;text-decoration:none;box-shadow:0 4px 18px rgba(194,65,12,.35);transition:transform .15s,box-shadow .15s;}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(194,65,12,.45);}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;padding:13px 26px;border-radius:10px;text-decoration:none;border:1px solid rgba(255,255,255,.15);transition:background .15s,border-color .15s;}
+.btn-ghost:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);}
+
+/* TRUST BAR */
+.trust-bar{background:white;border-bottom:1px solid var(--bdr);padding:18px 48px;}
+.trust-inner{max-width:1100px;margin:0 auto;display:flex;gap:32px;align-items:center;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--br);}
+.trust-item svg{color:var(--o);}
+
+/* SECTION WRAPPER */
+.wrap{max-width:1100px;margin:0 auto;padding:0 48px;}
+section{padding:80px 0;}
+
+/* SECTION LABELS */
+.sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--o);margin-bottom:14px;}
+.sec-label::before{content:'';width:18px;height:2px;background:var(--grad);border-radius:2px;}
+.sec-h{font-family:'Playfair Display',serif;font-size:clamp(28px,3.5vw,40px);font-weight:800;color:var(--nv);line-height:1.15;letter-spacing:-.5px;margin-bottom:14px;}
+.sec-h .hi{color:var(--o);}
+.sec-p{font-size:16px;color:var(--br);line-height:1.75;max-width:560px;}
+
+/* SECURITY CARDS GRID */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;margin-top:48px;}
+
+.sec-card{background:white;border:1.5px solid var(--bdr);border-radius:16px;padding:32px 28px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s,border-color .2s;}
+.sec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);opacity:0;transition:opacity .2s;}
+.sec-card:hover{box-shadow:0 12px 36px rgba(194,65,12,.12);transform:translateY(-3px);border-color:rgba(234,88,12,.25);}
+.sec-card:hover::before{opacity:1;}
+
+.sec-card.dark{background:var(--sec);border-color:rgba(255,255,255,.08);}
+.sec-card.dark:hover{border-color:rgba(234,88,12,.4);}
+.sec-card.dark .card-title{color:white;}
+.sec-card.dark .card-desc{color:rgba(255,255,255,.6);}
+.sec-card.dark .card-tag{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);}
+
+.card-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.card-num{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--pale);margin-bottom:10px;letter-spacing:1px;}
+.card-title{font-size:17px;font-weight:700;color:var(--nv);margin-bottom:10px;line-height:1.3;}
+.card-desc{font-size:14px;color:var(--br);line-height:1.75;}
+.card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;}
+.card-tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:var(--olt);color:var(--o);}
+
+/* DIVIDER SECTION */
+.divider-sec{background:var(--sec);padding:64px 0;position:relative;overflow:hidden;}
+.divider-sec::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(234,88,12,.05) 1px,transparent 1px);background-size:24px 24px;}
+.divider-inner{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 48px;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;}
+.divider-text h2{font-family:'Playfair Display',serif;font-size:clamp(24px,3vw,34px);font-weight:800;color:white;margin-bottom:8px;}
+.divider-text p{font-size:15px;color:rgba(255,255,255,.55);max-width:480px;line-height:1.7;}
+
+/* QA SECTION BG */
+.qa-sec{background:var(--bg2);}
+
+/* PROCESS SECTION */
+.process-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0;margin-top:48px;position:relative;}
+.process-steps::before{content:'';position:absolute;top:28px;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--bdr),var(--o),var(--bdr));opacity:.5;}
+.step{text-align:center;padding:0 20px;position:relative;}
+.step-num{width:56px;height:56px;border-radius:50%;background:white;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--o);position:relative;z-index:1;transition:background .2s,border-color .2s;}
+.step:hover .step-num{background:var(--o);border-color:var(--o);color:white;}
+.step-title{font-size:14px;font-weight:700;color:var(--nv);margin-bottom:6px;}
+.step-desc{font-size:12px;color:var(--pale);line-height:1.6;}
+
+/* CTA */
+.cta-sec{background:var(--nv);padding:80px 0;text-align:center;position:relative;overflow:hidden;}
+.cta-sec::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(234,88,12,.06) 1px,transparent 1px);background-size:28px 28px;}
+.cta-inner{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:0 48px;}
+.cta-inner h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,44px);font-weight:800;color:white;margin-bottom:16px;}
+.cta-inner p{font-size:16px;color:rgba(255,255,255,.55);margin-bottom:32px;line-height:1.75;}
+
+/* FOOTER (matching index) */
+footer{background:var(--nv);padding:68px 48px 32px;}
+.finn{max-width:1100px;margin:0 auto;}
+.ftop{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+.fdesc{font-size:14px;color:rgba(255,255,255,.38);line-height:1.75;margin:12px 0 20px;}
+.fsocs{display:flex;gap:10px;}
+.fsoc{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background .15s,border-color .15s;}
+.fsoc:hover{background:rgba(234,88,12,.25);border-color:rgba(234,88,12,.4);}
+.fcolh{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:16px;}
+.flinks{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.flinks a{font-size:14px;color:rgba(255,255,255,.38);text-decoration:none;transition:color .15s;}
+.flinks a:hover{color:white;}
+.fbot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:28px;border-top:1px solid rgba(255,255,255,.08);margin-bottom:12px;}
+.fbt{font-size:13px;color:rgba(255,255,255,.25);}
+.fbt em{font-style:italic;}
+.fbot-links{display:flex;gap:20px;}
+.fbot-links a{font-size:12px;color:rgba(255,255,255,.25);text-decoration:none;transition:color .15s;}
+.fbot-links a:hover{color:white;}
+.logo-f{display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:4px;}
+.logo-text-f{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;color:white;letter-spacing:1px;text-transform:uppercase;line-height:1.1;display:flex;flex-direction:column;}
+.logo-text-f span{color:#2DD4BF;font-size:10px;font-weight:700;letter-spacing:2px;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:0 20px;}
+  .hero-banner{padding:60px 20px;}
+  .wrap{padding:0 20px;}
+  .trust-bar{padding:14px 20px;}
+  .trust-inner{gap:16px;}
+  .cards-grid{grid-template-columns:1fr;}
+  .process-steps{grid-template-columns:1fr 1fr;}
+  .process-steps::before{display:none;}
+  .divider-inner{flex-direction:column;text-align:center;}
+  .ftop{grid-template-columns:1fr 1fr;gap:28px;}
+  .fbot{flex-direction:column;text-align:center;}
+  footer{padding:48px 20px 24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-mark"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAARC..." alt="Sahyadri Code Works" style="width:44px;height:44px;object-fit:contain;"></div>
+    <div class="logo-text">SAHYADRI<span>CODE WORKS</span></div>
+  </a>
+  <a href="index.html" class="back-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Home
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero-banner">
+  <div class="hero-blob1"></div>
+  <div class="hero-blob2"></div>
+  <div class="hero-inner">
+    <div class="hero-chip"><span class="chip-dot"></span>Security · QA · Bug Hunting</div>
+    <h1 class="hero-h">We Find Bugs Before<br><span class="hi">Hackers Do.</span></h1>
+    <p class="hero-sub">Our proactive security approach identifies vulnerabilities before they can be exploited — and our QA team ensures your software is rock-solid before it reaches your users.</p>
+    <div class="hero-btns">
+      <a href="index.html#contact" class="btn-main">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Request a Security Audit
+      </a>
+      <a href="index.html#contact" class="btn-ghost">Talk to Our Team →</a>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-inner">
+    <div class="trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Manual Bug Hunting</div>
+    <div class="trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>VAPT Certified Process</div>
+    <div class="trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Zero-Day Research</div>
+    <div class="trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>End-to-End QA Testing</div>
+    <div class="trust-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Cross-Browser Compatibility</div>
+  </div>
+</div>
+
+<!-- SECURITY SECTION -->
+<section>
+  <div class="wrap">
+    <div class="sec-label">Security Services</div>
+    <h2 class="sec-h">Security & <span class="hi">Bug Hunting</span></h2>
+    <p class="sec-p">Our proactive security approach identifies vulnerabilities before they can be exploited. We go beyond automated scanners — our researchers think like attackers.</p>
+
+    <div class="cards-grid">
+
+      <!-- VAPT -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#FEF3C7;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="card-num">01 / VAPT</div>
+        <div class="card-title">Vulnerability Assessment & Penetration Testing</div>
+        <div class="card-desc">We conduct deep-dive security audits of web applications, mobile apps, and network infrastructure to find critical security gaps before attackers do.</div>
+        <div class="card-tags"><span class="card-tag">Web Apps</span><span class="card-tag">Mobile</span><span class="card-tag">Network</span></div>
+      </div>
+
+      <!-- Manual Bug Hunting -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#FEE2E2;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+        </div>
+        <div class="card-num">02 / MANUAL</div>
+        <div class="card-title">Manual Bug Hunting</div>
+        <div class="card-desc">Unlike automated scanners, our security researchers perform manual exploitation to find complex logical flaws — IDOR, XSS, Authentication Bypass, and more.</div>
+        <div class="card-tags"><span class="card-tag">IDOR</span><span class="card-tag">XSS</span><span class="card-tag">Auth Bypass</span></div>
+      </div>
+
+      <!-- Zero-Day -->
+      <div class="sec-card dark">
+        <div class="card-ico" style="background:rgba(234,88,12,.15);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FB923C" stroke-width="1.75"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="card-num" style="color:rgba(255,255,255,.3);">03 / ZERO-DAY</div>
+        <div class="card-title">Zero-Day Research</div>
+        <div class="card-desc">We stay ahead of emerging threats by identifying and patching vulnerabilities that haven't even been publicly discovered yet.</div>
+        <div class="card-tags"><span class="card-tag">Emerging Threats</span><span class="card-tag">Proactive</span></div>
+      </div>
+
+      <!-- Secure Code Review -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#F0FDF4;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="1.75"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="card-num">04 / CODE</div>
+        <div class="card-title">Secure Code Review</div>
+        <div class="card-desc">We analyze your application's source code to ensure security is baked into the development phase — not just added as an afterthought at the end.</div>
+        <div class="card-tags"><span class="card-tag">Source Analysis</span><span class="card-tag">SAST</span></div>
+      </div>
+
+      <!-- API Security -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#EFF6FF;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.75"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        </div>
+        <div class="card-num">05 / API</div>
+        <div class="card-title">API Security Testing</div>
+        <div class="card-desc">We secure the connectors of your business — ensuring your APIs are protected against unauthorized data access, injection attacks, and broken authentication.</div>
+        <div class="card-tags"><span class="card-tag">REST / GraphQL</span><span class="card-tag">Auth</span><span class="card-tag">Injection</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider-sec">
+  <div class="divider-inner">
+    <div class="divider-text">
+      <h2>Security is not a feature.<br>It's a foundation.</h2>
+      <p>Every vulnerability we find is one less opportunity for a breach. Our team has experience across web, mobile, API, and network security — giving you complete coverage.</p>
+    </div>
+    <a href="index.html#contact" class="btn-main" style="flex-shrink:0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Get a Free Consultation
+    </a>
+  </div>
+</div>
+
+<!-- QA SECTION -->
+<section class="qa-sec">
+  <div class="wrap">
+    <div class="sec-label">Quality Assurance</div>
+    <h2 class="sec-h">QA & <span class="hi">Software Testing</span></h2>
+    <p class="sec-p">We ensure your software is not only bug-free but also provides a seamless user experience — from the first click to the last screen.</p>
+
+    <div class="cards-grid">
+
+      <!-- E2E Testing -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#FFF7ED;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="1.75"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="card-num">01 / FUNCTIONAL</div>
+        <div class="card-title">End-to-End Functional Testing</div>
+        <div class="card-desc">Every feature is tested against the business requirements to ensure it performs exactly as intended — from user login to payment flows.</div>
+        <div class="card-tags"><span class="card-tag">E2E</span><span class="card-tag">Functional</span><span class="card-tag">Requirements</span></div>
+      </div>
+
+      <!-- Performance -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#FDF2F8;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333EA" stroke-width="1.75"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="card-num">02 / PERFORMANCE</div>
+        <div class="card-title">Performance & Load Testing</div>
+        <div class="card-desc">We simulate high-traffic scenarios to make sure your website or app stays fast and stable under heavy pressure — so it never fails when it matters most.</div>
+        <div class="card-tags"><span class="card-tag">Load Testing</span><span class="card-tag">Stress Testing</span><span class="card-tag">Speed</span></div>
+      </div>
+
+      <!-- Regression -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#ECFDF5;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+        </div>
+        <div class="card-num">03 / REGRESSION</div>
+        <div class="card-title">Regression Testing</div>
+        <div class="card-desc">Every time you update your site, we run thorough checks to ensure the new code hasn't broken any existing features or user flows.</div>
+        <div class="card-tags"><span class="card-tag">Post-Deploy</span><span class="card-tag">Automated</span><span class="card-tag">CI/CD</span></div>
+      </div>
+
+      <!-- Cross-Device -->
+      <div class="sec-card">
+        <div class="card-ico" style="background:#EFF6FF;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.75"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        </div>
+        <div class="card-num">04 / COMPATIBILITY</div>
+        <div class="card-title">Cross-Device & Browser Compatibility</div>
+        <div class="card-desc">We verify that your platform works perfectly on all screen sizes — mobile, tablet, desktop — and across all major browsers including Chrome, Safari, and Firefox.</div>
+        <div class="card-tags"><span class="card-tag">Mobile</span><span class="card-tag">Tablet</span><span class="card-tag">Desktop</span><span class="card-tag">All Browsers</span></div>
+      </div>
+
+      <!-- UX Audit -->
+      <div class="sec-card dark">
+        <div class="card-ico" style="background:rgba(234,88,12,.15);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FB923C" stroke-width="1.75"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="card-num" style="color:rgba(255,255,255,.3);">05 / UX AUDIT</div>
+        <div class="card-title">UX & Usability Audits</div>
+        <div class="card-desc">We test the flow of your application from a real user's perspective to ensure it is intuitive, easy to navigate, and delivers a seamless experience.</div>
+        <div class="card-tags"><span class="card-tag">User Flow</span><span class="card-tag">Usability</span><span class="card-tag">UX</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section>
+  <div class="wrap">
+    <div class="sec-label">How It Works</div>
+    <h2 class="sec-h">Our <span class="hi">Testing Process</span></h2>
+    <p class="sec-p">A structured, repeatable approach to finding and fixing issues — every single time.</p>
+
+    <div class="process-steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Discovery</div>
+        <div class="step-desc">Understand your app, infrastructure, and threat model</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Reconnaissance</div>
+        <div class="step-desc">Map attack surfaces, endpoints, and entry points</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Exploitation</div>
+        <div class="step-desc">Manual & automated testing to confirm real vulnerabilities</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Reporting</div>
+        <div class="step-desc">Detailed report with severity ratings and fix recommendations</div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-title">Remediation</div>
+        <div class="step-desc">We assist your team in patching confirmed vulnerabilities</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-sec">
+  <div class="cta-inner">
+    <h2>Ready to Secure Your Product?</h2>
+    <p>Get a free consultation with our security team. We'll assess your application and recommend the right testing strategy.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="index.html#contact" class="btn-main">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contact Us
+      </a>
+      <a href="https://wa.me/918928946848?text=Hi, I'm interested in Security/QA testing services." class="btn-ghost" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp Us
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="finn">
+    <div class="ftop">
+      <div>
+        <a href="index.html" class="logo-f">
+          <div style="width:36px;height:36px;background:white;border-radius:6px;padding:2px;display:flex;align-items:center;justify-content:center;">
+            <svg width="28" height="28" viewBox="0 0 80 72" fill="none"><polygon points="40,4 62,44 18,44" fill="none" stroke="#1B4F72" stroke-width="2.5"/><polygon points="22,18 38,44 6,44" fill="none" stroke="#1B6E8F" stroke-width="2"/><polygon points="58,20 74,44 42,44" fill="none" stroke="#1B6E8F" stroke-width="2"/><circle cx="40" cy="4" r="2.5" fill="#EA580C"/><rect x="30" y="46" width="20" height="14" rx="3" fill="none" stroke="#1B4F72" stroke-width="2"/></svg>
+          </div>
+          <div class="logo-text-f">SAHYADRI<span>CODE WORKS</span></div>
+        </a>
+        <p class="fdesc">A Maharashtra-based tech studio inspired by the Sahyadri mountains. We build reliable, affordable digital solutions for businesses of every size.</p>
+        <div class="fsocs">
+          <a href="https://www.linkedin.com/company/sahyadricodeworks/" target="_blank" rel="noopener" class="fsoc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+          <a href="https://www.instagram.com/sahyadri.code?igsh=aTA5b2R0a3VkdWU0" target="_blank" rel="noopener" class="fsoc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4 class="fcolh">Services</h4>
+        <ul class="flinks">
+          <li><a href="index.html#services">Website Development</a></li>
+          <li><a href="index.html#services">Web App Development</a></li>
+          <li><a href="index.html#services">CRM Systems</a></li>
+          <li><a href="index.html#services">Social Media</a></li>
+          <li><a href="security-qa.html">Security & Bug Hunting</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="fcolh">Company</h4>
+        <ul class="flinks">
+          <li><a href="about-us.html">About Us</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="fcolh">Contact</h4>
+        <ul class="flinks">
+          <li><a href="mailto:info@sahyadricode.online">info@sahyadricode.online</a></li>
+          <li><a href="tel:+918928946848">+91-8928946848</a></li>
+          <li><a href="https://www.sahyadricode.online">sahyadricode.online</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="fbot">
+      <span class="fbt">© 2025 <em>Sahyadri Code Works</em> · Maharashtra, India</span>
+      <span class="fbt">Built in Maharashtra, <em>shipped to the world.</em></span>
+    </div>
+    <div class="fbot-links">
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
